@@ -7,6 +7,7 @@ import Header from "./components/Header";
 import Home from './components/Home';
 import Login from "./components/Login";
 import Signup from "./components/Signup";
+import Dashboard from "./components/Dashboard";
 import Analyze from "./components/ResumeAnalyzer";
 
 
@@ -24,6 +25,7 @@ const AppWrapper = () => {
         <Route path="/resume-upload" element={<ResumeUpload />} />
         <Route path="/interview" element={<Interview />} />
         <Route path="/feedback" element={<Feedback />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/analyze" element={<Analyze />} />
        
       </Routes>

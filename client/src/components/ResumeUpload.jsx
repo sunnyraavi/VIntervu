@@ -7,25 +7,52 @@ function ResumeUpload() {
   const [skills, setSkills] = useState([]);
   const [projects, setProjects] = useState([]);
   const [branch, setBranch] = useState('');
+  const [uploaded, setUploaded] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+  const resetForm = () => {
+    setFile(null);
+    setSkills([]);
+    setProjects([]);
+    setBranch('');
+    setError('');
+    setUploaded(false);
+    document.getElementById('resume').value = ''; // Clear file input
   };
 
-  const handleUpload = async () => {
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('resume', file);
-    try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/interview/upload-resume`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setSkills(res.data.skills);
-      setProjects(res.data.projects);  // Update state to include projects
-      setBranch(res.data.branch);
-    } catch (error) {
-      console.error('Error uploading resume:', error);
+  const handleUploadOrReupload = async () => {
+    if (!uploaded) {
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('resume', file);
+
+      try {
+        const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/interview/upload-resume`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        const { skills: extractedSkills, projects: extractedProjects, branch: inferredBranch } = res.data;
+
+        if (!extractedSkills || extractedSkills.length === 0) {
+          setError('Resume parsing incomplete. Please try again.');
+          setUploaded(true);
+          return;
+        }
+
+        setSkills(extractedSkills);
+        setProjects(extractedProjects);
+        setBranch(inferredBranch);
+        setError('');
+        setUploaded(true);
+      } catch (err) {
+        console.error('Upload failed:', err);
+        setError('An error occurred. Please try again.');
+        setUploaded(true);
+      }
+    } else {
+      resetForm();
     }
   };
 
@@ -51,17 +78,28 @@ function ResumeUpload() {
             type="file"
             id="resume"
             accept=".pdf,.docx"
-            onChange={handleFileChange}
+            onChange={(e) => {
+              setFile(e.target.files[0]);
+              setError('');
+            }}
             className="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
           />
         </div>
 
+        {error && (
+          <div className="mb-4 text-red-600 font-semibold bg-red-100 border border-red-300 p-3 rounded">
+            {error}
+          </div>
+        )}
+
         <button
-          onClick={handleUpload}
-          disabled={!file}
-          className={`w-full py-3 mt-6 bg-purple-600 text-white font-semibold rounded-lg shadow-md transition-all duration-300 ${!file ? 'opacity-50 cursor-not-allowed' : 'hover:bg-purple-700'}`}
+          onClick={handleUploadOrReupload}
+          disabled={!file && !uploaded}
+          className={`w-full py-3 mt-2 ${
+            (!file && !uploaded) ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
+          } text-white font-semibold rounded-lg shadow-md transition-all duration-300`}
         >
-          Upload Resume
+          {uploaded ? 'Re-upload Resume' : 'Upload Resume'}
         </button>
 
         {skills.length > 0 && (

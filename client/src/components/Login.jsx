@@ -18,6 +18,7 @@ const Login = () => {
       const res = await axios.post('http://localhost:5000/api/login', { email, password });
       setSuccess(res.data.message);
       sessionStorage.setItem("isLoggedIn", "true");
+      sessionStorage.setItem("logmail", email);
       window.dispatchEvent(new Event("loginStateChange")); // Notify other components
       navigate('/');
     } catch (error) {

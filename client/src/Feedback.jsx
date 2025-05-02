@@ -1,10 +1,32 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './Feedback.css';
 
 const Feedback = () => {
   const { state: feedback } = useLocation();
   const navigate = useNavigate();
+
+  const handleStoreAndNavigate = async () => {
+    if (feedback) {
+      try {
+        const email = sessionStorage.getItem("logmail"); 
+        await axios.post('http://localhost:5000/api/feedback', {
+        
+          email: email || '',
+          totalScore: feedback.totalScore,
+          maxScore: feedback.maxScore,
+          percentage: feedback.percentage,
+       
+          timestamp: new Date(),
+        });
+        console.log('Feedback stored successfully');
+      } catch (error) {
+        console.error('Error saving feedback:', error);
+      }
+    }
+    navigate('/');
+  };
 
   if (!feedback) {
     return <div>No feedback available. Please complete an interview first.</div>;
@@ -28,7 +50,7 @@ const Feedback = () => {
           </div>
         ))}
       </div>
-      <button onClick={() => navigate('/')}>Start New Interview</button>
+      <button onClick={handleStoreAndNavigate}>Start New Interview</button>
     </div>
   );
 };

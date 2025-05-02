@@ -6,22 +6,22 @@ const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
 const { exec } = require('child_process'); // For executing Python script
 require('dotenv').config();
+const path = require('path');
+const fs = require('fs/promises'); // for file operations
 
 const interviewRoutes = require('./routes/interview');
+const User = require('./models/User');
+const Feedback = require('./models/Feedback'); // Assuming you've defined this model correctly
 
 console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? 'Set' : 'Not set');
 
 const app = express();
+const router = express.Router(); // Create a new router instance
 
 app.use(cors());
 app.use(express.json());
 app.use('/api/interview', interviewRoutes);
-
-
-app.use(cors());
 app.use(bodyParser.json());
-
-const User = require('./models/User');
 
 // MongoDB Connection
 mongoose
@@ -50,6 +50,26 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+app.get('/api/feedback/:email', async (req, res) => {
+  const email = req.params.email;
+
+  try {
+    const feedback = await Feedback.find({ email }).sort({ timestamp: -1 });
+    console.log("Feedback Retrieved: ", feedback); // Log all feedback records for the user
+    
+    if (feedback.length === 0) {
+      return res.status(404).json({ message: "No feedback found for this email." });
+    }
+    
+    res.json(feedback); // Send back all feedback data
+  } catch (err) {
+    console.error("Error fetching feedback:", err);
+    res.status(500).json({ message: "Server error while fetching feedback." });
+  }
+});
+
+
+
 
 // Route: Sign Up
 app.post('/api/signup', async (req, res) => {
@@ -75,6 +95,37 @@ app.post('/api/signup', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// Endpoint to store user feedback
+router.post('/api/feedback', async (req, res) => {
+  const { name, email, totalScore, maxScore, percentage } = req.body;
+
+  if (totalScore === undefined || maxScore === undefined || percentage === undefined) {
+    return res.status(400).json({ error: 'Total score, max score, and percentage are required' });
+  }
+
+  const feedback = new Feedback({
+    
+    email: email || '',
+    totalScore,
+    maxScore,
+    percentage,
+    timestamp: new Date(),
+  });
+
+  try {
+    // Save feedback to the MongoDB database
+    await feedback.save();
+    console.log('Feedback stored:', feedback);
+
+    res.json({ message: 'Thank you for your feedback!' });
+  } catch (err) {
+    console.error('Failed to store feedback:', err.message);
+    res.status(500).json({ error: 'Failed to store feedback' });
+  }
+});
+
+// Email Sending Endpoint
 app.post("/send-email", async (req, res) => {
   const { name, email, message } = req.body;
 
@@ -104,6 +155,8 @@ app.post("/send-email", async (req, res) => {
   }
 });
 
+// Use the router in the app
+app.use(router);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
