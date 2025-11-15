@@ -1,10 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const fs = require('fs').promises;
+//const fs = require('fs').promises;
+const fs = require('fs');
 const path = require('path');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 const { processResume } = require('../services/resumeProcessor');
+const { enhanceResume } = require('../services/resumeEnhancer');
+
 const { startInterview, getNextQuestion, recordResponse, endInterview, getResults } = require('../services/interviewService');
 
 // Configure multer for disk storage (PDF only)
@@ -263,6 +268,7 @@ router.post('/end-interview', async (req, res, next) => {
     next(error);
   }
 });
+
 router.post('/api/feedback', async (req, res) => {
   try {
     const {
@@ -303,5 +309,75 @@ router.get('/results', async (req, res, next) => {
     next(error);
   }
 });
+router.post('/enhance-resume', upload.single('file'), async (req, res, next) => {
+  try {
+    if (!req.file || !req.file.path) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const result = await enhanceResume(req.file.path);
+    res.json(result);
+  } catch (error) {
+    console.error('Enhance resume error:', error);
+    next(error);
+  }
+});
+/*router.get('/download-enhanced/:filename', async (req, res) => {
+  try {
+    const filePath = path.join(__dirname, '../Uploads', req.params.filename);
+    res.download(filePath, (err) => {
+      if (err) {
+        console.error('File download error:', err);
+        res.status(500).send('Error downloading file');
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Unable to download file' });
+  }
+});*/
+// ⬇️ Serve the enhanced resume PDF file
+router.get('/download-enhanced/:filename', (req, res) => {
+  const filePath = path.join(__dirname, '../Uploads', req.params.filename);
+  if (fs.existsSync(filePath)) {
+    res.download(filePath);
+  } else {
+    res.status(404).json({ error: 'File not found' });
+  }
+});
+
+router.post('/evaluate-quality', async (req, res) => {
+  try {
+    const { text } = req.body;
+
+    if (!text || text.trim() === '') {
+      return res.status(400).json({ error: 'Resume text is required' });
+    }
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+    const prompt = `
+    Evaluate the following resume based on these 5 criteria.
+    Give a score from 0 to 100 for each, and a short one-line comment:
+
+    1. Grammar & Spelling:
+    2. Clarity & Conciseness:
+    3. Structure & Formatting:
+    4. Keyword Optimization:
+    5. Completeness of Sections:
+
+    Resume Text:
+    ${text}
+    `;
+
+    const result = await model.generateContent(prompt);
+    const feedback = result.response.text();
+
+    res.json({ feedback });
+  } catch (error) {
+    console.error('Resume quality evaluation error:', error);
+    res.status(500).json({ error: 'Failed to evaluate resume quality' });
+  }
+});
+
 
 module.exports = router;

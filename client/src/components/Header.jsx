@@ -82,6 +82,7 @@ const Header = () => {
   const navLinks = [
     { href: "/", label: "Home" },
     { label: "Analyzer", action: handleAnalyzerClick },  // Now uses handleAnalyzerClick correctly
+    { href: "/enhance", label: "Resume Enhancer" },
     { href: "/dashboard", label: "Dashboard" },
   ];
 

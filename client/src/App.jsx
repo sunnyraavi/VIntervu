@@ -9,6 +9,7 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import Dashboard from "./components/Dashboard";
 import Analyze from "./components/ResumeAnalyzer";
+import ResumeEnhancer from "./components/ResumeEnhancer";
 
 
 const AppWrapper = () => {
@@ -27,6 +28,8 @@ const AppWrapper = () => {
         <Route path="/feedback" element={<Feedback />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/analyze" element={<Analyze />} />
+        <Route path="/enhance" element={<ResumeEnhancer />} />
+
        
       </Routes>
     </>
