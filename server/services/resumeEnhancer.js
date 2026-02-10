@@ -56,6 +56,8 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const PDFDocument = require('pdfkit');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const summaryModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
 
 async function enhanceResume(filePath) {
   try {
@@ -90,6 +92,13 @@ ${text.substring(0, 5000)}
     const jsonEnd = responseText.lastIndexOf('}') + 1;
     const jsonString = responseText.slice(jsonStart, jsonEnd);
     const parsed = JSON.parse(jsonString);
+    if (!parsed.summary) {
+  // fallback summary generator
+  const summaryResponse = await summaryModel.generateContent(
+    `Summarize the following enhanced resume in 3–4 lines:\n\n${parsed.enhanced_resume}`
+  );
+  parsed.summary = summaryResponse.response.text();
+}
 
     // Generate PDF
     const pdfPath = path.join('Uploads', `Enhanced_${Date.now()}.pdf`);
