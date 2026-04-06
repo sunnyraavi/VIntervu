@@ -1,6 +1,6 @@
 import { Route, BrowserRouter as Router, Routes, useLocation } from 'react-router-dom';
 import './App.css';
-import Interview from './components/Interview';
+import MonitoredInterview from './components/MonitoredInterview';
 import ResumeUpload from './components/ResumeUpload';
 import Feedback from './Feedback';
 import Header from "./components/Header";
@@ -24,7 +24,7 @@ const AppWrapper = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/resume-upload" element={<ResumeUpload />} />
-        <Route path="/interview" element={<Interview />} />
+        <Route path="/interview" element={<MonitoredInterview />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/analyze" element={<Analyze />} />

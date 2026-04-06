@@ -15,15 +15,24 @@ async function recognizeSpeech(text) {
 
 async function synthesizeSpeech(text) {
   try {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
+      if (!text || typeof text !== 'string') {
+        console.warn('Invalid text for synthesis:', text);
+        resolve(); // Don't fail interview flow on speech synthesis
+        return;
+      }
       say.speak(text, null, 1.0, err => {
-        if (err) reject(err);
-        else resolve();
+        if (err) {
+          console.error('Speech synthesis failed:', err.message);
+          resolve(); // Continue interview even if speech synthesis fails
+        } else {
+          resolve();
+        }
       });
     });
   } catch (error) {
     console.error('Synthesize speech error:', error.message, error.stack);
-    throw error;
+    // Don't throw - allow interview to continue even if speech synthesis fails
   }
 }
 

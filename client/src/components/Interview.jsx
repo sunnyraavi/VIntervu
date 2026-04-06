@@ -2,7 +2,7 @@ import axios from 'axios';
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const Interview = () => {
+const Interview = ({ forwardedWebcamRef }) => {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [responses, setResponses] = useState([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -10,7 +10,7 @@ const Interview = () => {
   const [isInterviewEnded, setIsInterviewEnded] = useState(false);
   const [askedQuestions, setAskedQuestions] = useState(new Set());
 
-  const webcamRef = useRef(null);
+  const webcamRef = forwardedWebcamRef || useRef(null);
   const avatarVideoRef = useRef(null);
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
@@ -178,8 +178,9 @@ const Interview = () => {
           <video
             ref={webcamRef}
             autoPlay
-            className="w-full max-w-md  border-2 border-gray-300 rounded-lg"
-           
+            muted
+            playsInline
+            className="w-full max-w-md border-2 border-gray-300 rounded-lg"
           />
 
           {/* Buttons Positioned Below Webcam */}

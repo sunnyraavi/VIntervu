@@ -158,7 +158,7 @@ async function endInterview() {
 
 function getResults() {
   try {
-    const totalScore = sessionState.scores.reduce((a, b) => a + b, 0, 0);
+    const totalScore = sessionState.scores.reduce((a, b) => a + b, 0);
     const maxScore = sessionState.scores.length * 10;
     const percentage = maxScore ? (totalScore / maxScore) * 100 : 0;
     return {

@@ -12,6 +12,8 @@ const { enhanceResume } = require('../services/resumeEnhancer');
 
 const { startInterview, getNextQuestion, recordResponse, endInterview, getResults } = require('../services/interviewService');
 
+
+
 // Configure multer for disk storage (PDF only)
 const storage = multer.diskStorage({
   destination: 'Uploads/',
@@ -245,7 +247,7 @@ router.post('/record-response', async (req, res, next) => {
   try {
     const { audio, question } = req.body;
     console.log('Received record request:', { audio, question });
-    if (!audio && audio !== '') {
+    if (audio === undefined || audio === null) {
       console.error('No audio provided');
       return res.status(400).json({ error: 'No audio provided' });
     }
@@ -272,22 +274,20 @@ router.post('/end-interview', async (req, res, next) => {
 router.post('/api/feedback', async (req, res) => {
   try {
     const {
-    
       email = '',
       totalScore,
       maxScore,
       percentage,
-      
+      feedback: feedbackData,
       timestamp = new Date()
     } = req.body;
 
     const feedback = new Feedback({
-  
       email,
       totalScore,
       maxScore,
       percentage,
-      
+      feedback: feedbackData || [],
       timestamp,
     });
 
@@ -376,6 +376,48 @@ router.post('/evaluate-quality', async (req, res) => {
   } catch (error) {
     console.error('Resume quality evaluation error:', error);
     res.status(500).json({ error: 'Failed to evaluate resume quality' });
+  }
+});
+
+// Endpoint to reset interview state for cheating detection
+router.post('/reset-interview', async (req, res, next) => {
+  try {
+    // This endpoint allows the frontend to trigger a reset without modifying the core interview logic
+    console.log('Interview reset requested due to cheating detection');
+    
+    // You can add any additional cleanup logic here if needed
+    // For now, we'll just send a success response
+    // The actual state reset will happen when the page reloads
+    
+    res.json({ 
+      success: true, 
+      message: 'Interview will be reset. Please wait for the page to reload.'
+    });
+  } catch (error) {
+    console.error('Reset interview error:', error);
+    next(error);
+  }
+});
+
+// Endpoint to log cheating violations for audit trail
+router.post('/log-violation', async (req, res, next) => {
+  try {
+    const { type, message, severity, timestamp } = req.body;
+    
+    // Log violation details for audit trail
+    console.log(`[VIOLATION LOGGED] Type: ${type}, Severity: ${severity}, Time: ${timestamp}`);
+    console.log(`Message: ${message}`);
+    
+    // TODO: In production, save this to a database for audit trails
+    // Example: await Violation.create({ type, message, severity, timestamp, userId });
+    
+    res.json({ 
+      success: true, 
+      message: 'Violation logged for audit trail' 
+    });
+  } catch (error) {
+    console.error('Log violation error:', error);
+    next(error);
   }
 });
 
